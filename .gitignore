@@ -1,0 +1,7 @@
+# 设备端生成的数据不是发行内容。
+/adbshome/.cache/
+/adbshome/.zim/init.zsh
+/adbshome/.zim/login_init.zsh
+/adbshome/.zim/*.zwc
+/adbshome/.local/state/
+/adbshome/.zshrc.local

@@ -1,0 +1,17 @@
+# 使用本地模块，无需在手机上下载或运行 Git。
+zmodule "$ZIM_HOME/modules/environment"
+zmodule "$ZIM_HOME/modules/input"
+zmodule "$ZIM_HOME/modules/termtitle"
+zmodule "$ZIM_HOME/modules/utility"
+
+# 主题使用目录和耗时信息；设备没有 Git，不启用仓库状态。
+zmodule "$ZIM_HOME/modules/duration-info"
+zmodule "$ZIM_HOME/modules/prompt-pwd"
+zmodule "$ZIM_HOME/modules/asciiship"
+
+# 扩展补全必须先进入 fpath，再由 completion 统一初始化。
+zmodule "$ZIM_HOME/modules/zsh-completions" --fpath src
+zmodule "$ZIM_HOME/modules/completion"
+zmodule "$ZIM_HOME/modules/zsh-syntax-highlighting"
+zmodule "$ZIM_HOME/modules/zsh-history-substring-search"
+zmodule "$ZIM_HOME/modules/zsh-autosuggestions"
