@@ -1,0 +1,28 @@
+# 由设备系统 mksh 加载；每次连接只更新本文件，不覆盖历史和用户配置。
+umask 077
+HISTSIZE=1000
+PS1='hdc:${PWD/#$HOME/\~} $ '
+set -o emacs
+alias ll='ls -lah'
+alias ..='cd ..'
+alias hist='fc -l'
+
+ff() {
+    if [ "$#" -ne 1 ]; then echo '用法：ff 文件名模式，例如 ff "*.log"' >&2; return 2; fi
+    find . -name "$1"
+}
+
+hlog() {
+    if [ "$#" -ne 1 ]; then echo '用法：hlog 日志标签' >&2; return 2; fi
+    hilog -T "$1"
+}
+
+hdcs-help() {
+    printf '%s\n' 'll / ..       详细列目录 / 返回上级目录' \
+        'ff "*.log"    从当前目录按名称查找文件' \
+        'hlog TAG      按标签跟踪 HiLog（Ctrl-C 停止）' \
+        'hist          查看最近命令；方向键翻历史，Tab 补全' \
+        'cd            回到 hdcs 目录；exit 返回电脑'
+}
+
+[ ! -r "$HOME/.mkshrc.local" ] || . "$HOME/.mkshrc.local"

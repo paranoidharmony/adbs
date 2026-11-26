@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# 从任意工作目录运行；按本脚本的真实位置定位同仓库的 adbs。
+# 从任意工作目录运行，分别链接 Android 和鸿蒙入口。
 set -euo pipefail
 repo=$(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")
-src=$repo/adbs
 bin=$HOME/.local/bin
-[[ -f $src && -x $src ]] || { printf '找不到可执行文件：%s\n' "$src" >&2; exit 1; }
 mkdir -p -- "$bin"
-for name in adbs sbda; do
+for name in adbs sbda hdcs cshd; do
+  case $name in
+    adbs|sbda) src=$repo/adbs ;;
+    hdcs|cshd) src=$repo/hdcs ;;
+  esac
+  [[ -f $src && -x $src ]] || { printf '找不到可执行文件：%s\n' "$src" >&2; exit 1; }
   dest=$bin/$name
   if [[ -L $dest && $dest -ef $src ]]; then
     printf '链接已就绪：%s\n' "$dest"
@@ -20,5 +23,5 @@ for name in adbs sbda; do
 done
 case ":${PATH:-}:" in
   *":$bin:"*) ;;
-  *) printf '要直接运行 adbs 或 sbda，请在 shell 配置中添加：export PATH="$HOME/.local/bin:$PATH"\n' ;;
+  *) printf '要直接运行 adbs、sbda、hdcs 或 cshd，请在 shell 配置中添加：export PATH="$HOME/.local/bin:$PATH"\n' ;;
 esac

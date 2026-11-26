@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""在普通 HDC 交互终端中启动设备自带的 mksh，不安装设备端程序。"""
+
+import argparse
+import hashlib
+import os
+from pathlib import Path
+import pty
+import re
+import shutil
+import subprocess
+import sys
+
+
+HOME = '/data/local/tmp/hdcshome'
+RC = f'{HOME}/mkshrc'
+LOCAL_RC = Path(__file__).resolve().with_name('hdcshome') / 'mkshrc'
+
+
+def require_marker(hdc, command):
+    """部分 HDC 版本不转发远端退出码，只认单独一行的成功标记。"""
+    result = subprocess.run([*hdc, 'shell', f"{command} && echo HDCS_OK"],
+                            stdout=subprocess.PIPE, text=True, check=True)
+    lines = result.stdout.splitlines()
+    if not lines or lines[-1] != 'HDCS_OK':
+        sys.exit(result.stdout.strip() or '设备端检查失败，请用 hdc shell 检查连接、mksh 与目录权限。')
+    return '\n'.join(lines[:-1])
+
+
+def sync_config(hdc):
+    # HDC 的文件传输失败也可能返回 0。按内容跳过未变化的配置，传输后校验。
+    digest = hashlib.sha256(LOCAL_RC.read_bytes()).hexdigest()
+    inspect = f'test -n "$KSH_VERSION" && umask 077 && mkdir -p {HOME} && test -w {HOME}'
+    current = require_marker(hdc, f'{inspect} && if test -r {RC}; then sha256sum < {RC}; fi')
+    if digest not in current.split():
+        subprocess.run([*hdc, 'file', 'send', str(LOCAL_RC), RC], check=True)
+        if digest not in require_marker(hdc, f'sha256sum < {RC}').split():
+            sys.exit('设备端 mkshrc 校验失败，未启动会话。')
+
+
+def interact(hdc):
+    # hdc shell COMMAND 不分配设备端 PTY；等待普通 shell 提示符后再启动 mksh。
+    size = shutil.get_terminal_size()
+    start = (f'cd {HOME} && HOME={HOME} ENV={RC} HISTFILE={HOME}/history '
+             f'COLUMNS={size.columns} LINES={size.lines} exec /system/bin/sh -i\n').encode()
+    waiting = True
+    tail = b''
+
+    def read_device(fd):
+        nonlocal waiting, tail
+        data = os.read(fd, 4096)
+        if waiting and data:
+            tail = (tail + data)[-512:]
+            if re.search(rb'[$#] $', tail):
+                os.write(fd, start)
+                waiting = False
+        return data
+
+    status = pty.spawn([*hdc, 'shell'], master_read=read_device)
+    if waiting:
+        sys.exit('没有收到设备 shell 提示符；请用 hdc shell 检查连接。')
+    return os.waitstatus_to_exitcode(status)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-t', metavar='设备标识', help='选择 hdc list targets 中的设备')
+    parser.add_argument('--check', action='store_true', help='同步并检查配置，不进入交互终端')
+    args = parser.parse_args()
+    if not args.check and not (sys.stdin.isatty() and sys.stdout.isatty()):
+        parser.error('交互模式需要终端；自动检查请用 --check，执行脚本请用 hdc shell。')
+    if not shutil.which('hdc'):
+        sys.exit('找不到 hdc，请将鸿蒙 SDK 的 toolchains 目录加入 PATH。')
+    hdc = ['hdc', '-t', args.t] if args.t else ['hdc']
+    sync_config(hdc)
+    if args.check:
+        require_marker(hdc, f'HOME={HOME}; export HOME; . {RC} && whence hdcs-help hlog ff >/dev/null')
+        print(f'mksh 和调试配置已就绪：{HOME}')
+        return 0
+    return interact(hdc)
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except subprocess.CalledProcessError as exc:
+        sys.exit(f'HDC 命令失败（{exc.returncode}）：{exc.cmd[0]}，请检查设备连接。')
