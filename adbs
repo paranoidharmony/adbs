@@ -5,7 +5,8 @@ cd -- "$(dirname -- "$(realpath -- "$0")")"
 usage() { printf '%s\n' '用法：adbs [-s 设备序列号] [--check]' '      adbs --update'; }
 # 更新在主机完成，不需要手机在线，只允许快进以避免意外合并。
 if [[ $# == 1 && $1 == --update ]]; then
-  exec git pull --ff-only
+  git pull --ff-only
+  exec ./install.sh
 fi
 a=(adb)
 if [[ ${1:-} == -s && $# -ge 2 ]]; then a+=(-s "$2"); shift 2; fi
