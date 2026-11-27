@@ -20,9 +20,22 @@ abi=$("${a[@]}" shell getprop ro.product.cpu.abi)
 [[ ${abi%$'\r'} == arm64-v8a ]] || { echo "仅支持 arm64-v8a，当前设备为 $abi" >&2; exit 1; }
 remote=/data/local/tmp/adbs
 "${a[@]}" shell "umask 077; mkdir -p $remote/home"
-"${a[@]}" push --sync android/usr android/etc "$remote/" >&2
+# 只压缩成功时的传输统计；失败保留 adb 原始诊断和退出码。
+if sync_log=$("${a[@]}" push --sync android/usr android/etc "$remote/" 2>&1); then
+  printf '%s\n' "$sync_log" | awk '
+    /^android\/(usr|etc)\/?: [0-9]+ files? pushed, [0-9]+ skipped\./ { dirs += $2; next }
+    /^[0-9]+ files? pushed, [0-9]+ skipped\./ { total = $1; have_total = 1; next }
+    NF { print }
+    END {
+      count = have_total ? total : dirs
+      if (count > 0) printf "Synced %d file%s.\n", count, (count == 1 ? "" : "s")
+    }' >&2
+else
+  status=$?; printf '%s\n' "$sync_log" >&2; exit "$status"
+fi
 start="/system/bin/sh $remote/usr/libexec/start-zsh"
 if $check; then
   exec "${a[@]}" shell -T "$start --check"
 fi
+printf '%s\n' 'Welcome to adbs (Android Zsh).' >&2
 exec "${a[@]}" shell -t "$start"

@@ -41,7 +41,7 @@ adbs --check     # 在设备上验证运行环境
 adbs --update    # 在主机上快进拉取更新，成功后执行更新后的 install.sh，无需连接手机
 ```
 
-支持已授权 ADB 调试的 `arm64-v8a` 设备。进入时自动创建并打开 `/sdcard/workspace`；共享存储不可用时提示并回到 HOME。`cd` 无参数时回到当前身份的 HOME。
+支持已授权 ADB 调试的 `arm64-v8a` 设备。交互启动时显示欢迎语；实际推送文件时额外显示同步数量，不打印跳过统计。进入时自动创建并打开 `/sdcard/workspace`；共享存储不可用时提示并回到 HOME。`cd` 无参数时回到当前身份的 HOME。
 
 常用交互别名（普通和 root 会话均可用）：
 
@@ -70,5 +70,7 @@ adbs --update    # 在主机上快进拉取更新，成功后执行更新后的 
 公共配置位于 `android/etc/`：`.zshrc` 是入口，依次加载 `zsh/zim.zsh`（插件初始化和补全缓存）、`zsh/aliases.zsh`（交互别名）、`zsh/kernelsu.zsh`（`su`、`sudo`），最后加载当前用户的 `~/.zshrc.local`。增减 Zim 插件改 `.zimrc`。
 
 旧目录 `/data/local/tmp/adbshome` 不再使用，也不会自动删除；如需保留旧历史或 `.zshrc.local`，可手动复制到新普通用户 HOME。
+
+**`dig` 的已知限制：**内置 `dig` 启动时会读取 Termux 私有的 `resolv.conf`。如果文件不存在，仍可用 `dig @服务器 域名` 查询；如果文件存在但普通 ADB shell 无权读取，连 `dig -v` 都会失败，`adbs --check` 也会如实报错。在已授权的 KernelSU 设备上改用 `sudo dig @服务器 域名` 即可，无需修改 Termux 权限。
 
 第三方组件来源和许可：[Zsh 与 Zim](ZSH-SOURCES.md) · [网络工具及运行库](tools-sources.md)。

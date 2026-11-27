@@ -6,7 +6,14 @@
   for fn in _zsh_autosuggest_start _zsh_highlight_highlighter_main_paint history-substring-search-up prompt-pwd _prompt_asciiship_vimode; do
     (( $+functions[$fn] )) || { print -u2 "Zim 模块未就绪：$fn"; return 1; }
   done
-  [[ ${_comps[age]:-} == _age ]] || { print -u2 '扩展补全未注册'; return 1; }
+  # 验证手机上实际使用的命令已注册专用补全。
+  local cmd
+  for cmd in dig tcpdump tree sudo; do
+    fn=_$cmd
+    [[ ${_comps[$cmd]:-} == $fn ]] && (( $+functions[$fn] )) || {
+      print -u2 "命令补全不可用：$cmd ($fn)"; return 1
+    }
+  done
   local user=shell
   (( EUID == 0 )) && user=root
   [[ $HOME == $ADBS_ROOT/home/$user && $HISTFILE == $HOME/.local/state/zsh_history &&

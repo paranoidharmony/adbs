@@ -74,9 +74,10 @@ _iwyu_opts() {
     '*: :_files'
 }
 
-_alternative \
-  'iwyu:iwyu_option:_iwyu_opts' \
-  'gcc:gcc_option:_gcc' \
+# 精简版不提供 _gcc；旧设备保留该补全时仍可使用。
+local -a alternatives=('iwyu:iwyu_option:_iwyu_opts')
+(( $+functions[_gcc] )) && alternatives+=('gcc:gcc_option:_gcc')
+_alternative "${alternatives[@]}"
 
 # Local Variables:
 # mode: Shell-Script

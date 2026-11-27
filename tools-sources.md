@@ -8,7 +8,7 @@
 
 - 库目录：`$ADBS_ROOT/usr/lib` 应置于 `LD_LIBRARY_PATH` 首位。实体文件按 `DT_NEEDED` 名称安装，不依赖符号链接；不覆盖 Zsh 已提供的同内容 `libandroid-support.so`、`libpcre2-8.so`。即使系统有 zlib，也保留本闭包要求的 `libz.so.1`。
 - curl：设置 `CURL_CA_BUNDLE="$ADBS_ROOT/etc/tls/cert.pem"`，或显式 `--cacert`；没有禁用主机名或证书链校验。CA 是 Mozilla 派生的静态快照（118 张），不会随 Android 信任库更新。
-- `dig` 内置的默认 resolv.conf 在 Termux 私有前缀。部分设备上普通 shell 无权访问，连 `dig -v` 也会在解析参数前失败，显式指定服务器不能绕过；此时 `adbs --check` 会报告该错误。
+- `dig` 的默认配置路径固定为 `/data/data/com.termux/files/usr/etc/resolv.conf`。文件不存在（`ENOENT`）时可继续启动并向显式指定的 DNS 服务器查询；权限不足（`EACCES`）时在发出查询前退出，`-v` 和 `@服务器` 均不能绕过。保留原包和普通身份的真实自检结果，不重编或改系统权限；KernelSU 已授权时使用 `sudo dig`。
 - 只装列表中的 ELF 和 CA，不带 BusyBox applet 链接、Termux 用户空间或可选插件、Kerberos 配置等。BusyBox 用 `busybox <applet>`；部分 applet 的外部程序/硬编码路径在独立环境可能不可用。DT_NEEDED 闭包不保证所有 dlopen 或可选协议功能。tcpdump 的权限仍受设备能力与 SELinux 限制。
 
 ## 索引与校验

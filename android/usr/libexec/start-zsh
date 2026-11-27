@@ -20,7 +20,9 @@ case ${1:-} in
     if ! { mkdir -p "$workspace" && cd "$workspace"; }; then
       printf '工作目录 %s 不可用，改用 %s\n' "$workspace" "$HOME" >&2
       cd "$HOME"
-    fi ;;
+    fi
+    # Android sh 默认不导出 PWD；让 Zsh 保留 /sdcard 的逻辑路径。
+    export PWD ;;
   --keep-cwd) ;;  # 裸 su：继承调用者的工作目录。
   --exec) shift; exec -- "$@" ;;  # sudo：只运行指定命令，不加载交互配置。
   --check) exec "$ADBS_ROOT/usr/bin/zsh" -ic 'source "$ADBS_ROOT/usr/libexec/check.zsh"' ;;
