@@ -7,10 +7,16 @@
     (( $+functions[$fn] )) || { print -u2 "Zim 模块未就绪：$fn"; return 1; }
   done
   [[ ${_comps[age]:-} == _age ]] || { print -u2 '扩展补全未注册'; return 1; }
+  local user=shell
+  (( EUID == 0 )) && user=root
+  [[ $HOME == $ADBS_ROOT/home/$user && $HISTFILE == $HOME/.local/state/zsh_history &&
+     -s $ZIM_HOME/init.zsh && -s $HOME/.cache/zcompdump && -d $TMPDIR ]] || {
+    print -u2 'HOME 或会话状态路径异常'; return 1
+  }
   local tool
-  for tool in zsh busybox curl tcpdump dig; do
-    [[ ${commands[$tool]:-} == $HOME/.local/bin/$tool ]] || { print -u2 "缺少内置命令：$tool"; return 1; }
+  for tool in zsh busybox tree curl tcpdump dig; do
+    [[ ${commands[$tool]:-} == $ADBS_ROOT/usr/bin/$tool ]] || { print -u2 "缺少内置命令：$tool"; return 1; }
   done
   [[ -s $CURL_CA_BUNDLE ]] || { print -u2 '找不到 curl CA 证书包'; return 1; }
-  zsh --version && busybox true && curl --version && tcpdump --version && dig -v
+  zsh --version && busybox true && tree --version && curl --version && tcpdump --version && dig -v
 }

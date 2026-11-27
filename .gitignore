@@ -1,7 +1,2 @@
-# 设备端生成的数据不是发行内容。
-/adbshome/.cache/
-/adbshome/.zim/init.zsh
-/adbshome/.zim/login_init.zsh
-/adbshome/.zim/*.zwc
-/adbshome/.local/state/
-/adbshome/.zshrc.local
+# 仅 usr/ 和 etc/ 属于 Android 发行内容。
+/android/home/

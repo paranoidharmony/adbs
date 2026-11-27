@@ -1,12 +1,14 @@
 # Android arm64 诊断工具来源（2026-11-23）
 
-四个程序是原包的 AArch64 ELF，解释器 `/system/bin/linker64`，标记 Android API 24。未在设备上实测，未执行抓包。以下路径相对于 `adbshome/.local`。
+四个程序是原包的 AArch64 ELF，解释器 `/system/bin/linker64`，标记 Android API 24。未执行抓包。以下 `bin/`、`lib/`、`share/` 路径相对于 `android/usr/`，`etc/` 相对于 `android/`。
+
+另于 2026-11-27 加入独立的 [`tree` 2.3.2（aarch64）](https://packages.termux.dev/apt/termux-main/pool/main/t/tree/tree_2.3.2_aarch64.deb)，支持 `-L` 等标准选项，不是 BusyBox applet。用同一签名密钥验证 InRelease 后逐级核对 SHA256：Packages.gz `b6b902a358b1f4cfae07767b7d14719c7f64406640e04932b9e9bcba3904d68c`，deb `77bf9ef3035a18e3b6fb5d833b7d452733e7e0cff889bd2b71e5071c58a54867`，`bin/tree` `07447dc028eb28d9f09471d28123daff9a9d46723261207df59b7973a4f6a3c0`。依赖已有的 `libandroid-support.so` 和系统 `libc.so`；原包引用的 GPL-2.0 文本取自同一索引的 `termux-licenses` 2.2，保存在 `share/licenses/diagnostic-tools/tree/copyright`。
 
 ## 启动环境与限制
 
-- 库目录：`$HOME/.local/lib` 应置于 `LD_LIBRARY_PATH` 首位。实体文件按 `DT_NEEDED` 名称安装，不依赖符号链接；不覆盖 Zsh 已提供的同内容 `libandroid-support.so`、`libpcre2-8.so`。即使系统有 zlib，也保留本闭包要求的 `libz.so.1`。
-- curl：设置 `CURL_CA_BUNDLE="$HOME/.local/etc/tls/cert.pem"`，或显式 `--cacert`；没有禁用主机名或证书链校验。CA 是 Mozilla 派生的静态快照（118 张），不会随 Android 信任库更新。
-- `dig` 内置的默认 resolv.conf 在 Termux 私有前缀，普通 adb shell 不能指望该文件存在；使用 `dig @<DNS服务器IP> 域名`。
+- 库目录：`$ADBS_ROOT/usr/lib` 应置于 `LD_LIBRARY_PATH` 首位。实体文件按 `DT_NEEDED` 名称安装，不依赖符号链接；不覆盖 Zsh 已提供的同内容 `libandroid-support.so`、`libpcre2-8.so`。即使系统有 zlib，也保留本闭包要求的 `libz.so.1`。
+- curl：设置 `CURL_CA_BUNDLE="$ADBS_ROOT/etc/tls/cert.pem"`，或显式 `--cacert`；没有禁用主机名或证书链校验。CA 是 Mozilla 派生的静态快照（118 张），不会随 Android 信任库更新。
+- `dig` 内置的默认 resolv.conf 在 Termux 私有前缀。部分设备上普通 shell 无权访问，连 `dig -v` 也会在解析参数前失败，显式指定服务器不能绕过；此时 `adbs --check` 会报告该错误。
 - 只装列表中的 ELF 和 CA，不带 BusyBox applet 链接、Termux 用户空间或可选插件、Kerberos 配置等。BusyBox 用 `busybox <applet>`；部分 applet 的外部程序/硬编码路径在独立环境可能不可用。DT_NEEDED 闭包不保证所有 dlopen 或可选协议功能。tcpdump 的权限仍受设备能力与 SELinux 限制。
 
 ## 索引与校验

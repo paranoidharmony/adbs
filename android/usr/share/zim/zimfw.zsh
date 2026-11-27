@@ -557,6 +557,8 @@ _zimfw_clean_dumpfile() {
 }
 
 _zimfw_compile() {
+  # adbs 的共享源码不存放各会话生成的 .zwc。
+  zstyle -t ':zim' disable-compile && return 0
   # Compile zimfw scripts
   local zroot_target zfile
   for zroot_target in ${_zroot_targets:|_zdisabled_roots}; do

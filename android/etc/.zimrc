@@ -1,0 +1,17 @@
+# 绝对路径表示本地模块：源码共用，不在各自的 HOME 下载插件。
+zmodule "$ADBS_ROOT/usr/share/zim/modules/environment"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/input"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/termtitle"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/utility"
+
+# 主题使用目录和耗时信息；设备没有 Git，不启用仓库状态。
+zmodule "$ADBS_ROOT/usr/share/zim/modules/duration-info"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/prompt-pwd"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/asciiship"
+
+# 扩展补全必须先进入 fpath，再由 completion 统一初始化。
+zmodule "$ADBS_ROOT/usr/share/zim/modules/zsh-completions" --fpath src
+zmodule "$ADBS_ROOT/usr/share/zim/modules/completion"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/zsh-autosuggestions"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/zsh-syntax-highlighting"
+zmodule "$ADBS_ROOT/usr/share/zim/modules/zsh-history-substring-search"

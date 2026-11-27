@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 将仓库维护的 HOME 同步给 Android shell 用户，再启动交互式 Zsh。
+# 只同步 Android 共享运行环境，用户 HOME 和工作区由设备维护。
 set -euo pipefail
 cd -- "$(dirname -- "$(realpath -- "$0")")"
 usage() { printf '%s\n' '用法：adbs [-s 设备序列号] [--check]' '      adbs --update'; }
@@ -18,12 +18,11 @@ case $#:${1:-} in
 esac
 abi=$("${a[@]}" shell getprop ro.product.cpu.abi)
 [[ ${abi%$'\r'} == arm64-v8a ]] || { echo "仅支持 arm64-v8a，当前设备为 $abi" >&2; exit 1; }
-remote=/data/local/tmp/adbshome
-"${a[@]}" shell "umask 077; mkdir -p $remote"
-# 指定父目录，避免重复连接时出现 adbshome/adbshome。
-"${a[@]}" push --sync adbshome /data/local/tmp/ >&2
-start="/system/bin/sh $remote/.local/libexec/start-zsh"
+remote=/data/local/tmp/adbs
+"${a[@]}" shell "umask 077; mkdir -p $remote/home"
+"${a[@]}" push --sync android/usr android/etc "$remote/" >&2
+start="/system/bin/sh $remote/usr/libexec/start-zsh"
 if $check; then
-  exec "${a[@]}" shell -T "$start -c 'source \"\$HOME/.local/libexec/check.zsh\"'"
+  exec "${a[@]}" shell -T "$start --check"
 fi
 exec "${a[@]}" shell -t "$start"

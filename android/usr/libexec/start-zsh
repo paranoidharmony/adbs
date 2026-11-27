@@ -1,0 +1,29 @@
+#!/system/bin/sh
+# 普通会话和 KernelSU 会话共用此入口，只按实际身份选择用户数据。
+set -eu
+export ADBS_ROOT=/data/local/tmp/adbs
+case $(/system/bin/id -u) in
+  0) user=root ;;
+  *) user=shell ;;
+esac
+export HOME="$ADBS_ROOT/home/$user" ZDOTDIR="$ADBS_ROOT/etc"
+export PATH="$ADBS_ROOT/usr/bin:$PATH" LD_LIBRARY_PATH="$ADBS_ROOT/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export TERMINFO="$ADBS_ROOT/usr/share/terminfo" TERM=xterm-256color
+export CURL_CA_BUNDLE="$ADBS_ROOT/etc/tls/cert.pem"
+export TMPDIR="$HOME/.cache/tmp" TMPPREFIX="$HOME/.cache/tmp/zsh"
+umask 077
+mkdir -p "$TMPDIR" "$HOME/.local/state"
+
+case ${1:-} in
+  '')
+    workspace=/sdcard/workspace
+    if ! { mkdir -p "$workspace" && cd "$workspace"; }; then
+      printf '工作目录 %s 不可用，改用 %s\n' "$workspace" "$HOME" >&2
+      cd "$HOME"
+    fi ;;
+  --keep-cwd) ;;  # 裸 su：继承调用者的工作目录。
+  --exec) shift; exec -- "$@" ;;  # sudo：只运行指定命令，不加载交互配置。
+  --check) exec "$ADBS_ROOT/usr/bin/zsh" -ic 'source "$ADBS_ROOT/usr/libexec/check.zsh"' ;;
+  *) printf '未知启动选项：%s\n' "$1" >&2; exit 2 ;;
+esac
+exec "$ADBS_ROOT/usr/bin/zsh" -i
